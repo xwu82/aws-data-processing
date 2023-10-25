@@ -1,0 +1,34 @@
+{
+    "Parameters": {
+        "StreamName": {
+            "Default": "test-kinesis-example",
+            "Description": "kinesis stream name",
+            "Type": "String"
+        }
+    },
+    "Resources": {
+        "MyKinesis": {
+            "Type": "AWS::Kinesis::Stream",
+            "Properties": {
+                "Name": {
+                    "Ref": "StreamName"
+                },
+                "RetentionPeriodHours": 24,
+                "ShardCount": 1,
+                "StreamModeDetails": {
+                    "StreamMode": "PROVISIONED"
+                },
+                "Tags": [
+                    {
+                        "Key": "Developer",
+                        "Value": "Jake"
+                    },
+                    {
+                        "Key": "SupportEmail",
+                        "Value": "xxx@gamil.com"
+                    }
+                ]
+            }
+        }
+    }
+}
