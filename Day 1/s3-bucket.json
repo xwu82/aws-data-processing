@@ -1,0 +1,103 @@
+{
+    "Parameters": {
+        "Account": {
+            "Default": "CharlotteWu",
+            "Description": "AWS Account Name",
+            "Type": "String"
+        },
+        "Region": {
+            "Default": "us-east-2",
+            "Description": "AWS Region",
+            "Type": "String"
+        },
+        "RawBucketName": {
+            "Default": "Mybucket",
+            "Description": "Bucket Name",
+            "Type": "String"
+        }
+    },
+    "Resources": {
+        "Mybucket": {
+            "Type": "AWS::S3::Bucket",
+            "Properties": {
+                "BucketName": "xinyu-aws-training-bucket",
+                "ObjectLockConfiguration": {
+                    "ObjectLockEnabled": "Enabled",
+                    "Rule": {
+                        "DefaultRetention": {
+                            "Mode": "COMPLIANCE",
+                            "Days": 1
+                        }
+                    }
+                },
+                "PublicAccessBlockConfiguration": {
+                    "BlockPublicAcls": false,
+                    "BlockPublicPolicy": false,
+                    "IgnorePublicAcls": false,
+                    "RestrictPublicBuckets": false
+                },
+                "ObjectLockEnabled": true,
+                "Tags": [
+                    {
+                        "Key": "product",
+                        "Value": "candy"
+                    },
+                    {
+                        "Key": "color",
+                        "Value": "red"
+                    },
+                    {
+                        "Key": "price",
+                        "Value": "5"
+                    }
+                ],
+                "VersioningConfiguration": {
+                    "Status": "Enabled"
+                }
+            }
+        },
+        "TrainingBucketPolicy": {
+            "Type": "AWS::S3::BucketPolicy",
+            "Properties": {
+                "Bucket": "xinyu-aws-training-bucket",
+                "PolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Action": [
+                                "s3:GetObject"
+                            ],
+                            "Effect": "Allow",
+                            "Resource": [
+                                {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "arn:aws:s3:::",
+                                            {
+                                                "Ref": "Mybucket"
+                                            }
+                                        ]
+                                    ]
+                                },
+                                {
+                                    "Fn::Join": [
+                                        "",
+                                        [
+                                            "arn:aws:s3:::",
+                                            {
+                                                "Ref": "Mybucket"
+                                            },
+                                            "/*"
+                                        ]
+                                    ]
+                                }
+                            ],
+                            "Principal": "*"
+                        }
+                    ]
+                }
+            }
+        }
+    }
+}

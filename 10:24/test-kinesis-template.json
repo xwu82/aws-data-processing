@@ -1,0 +1,34 @@
+{
+    "Parameters": {
+        "StreamName": {
+            "Default": "kinesis-test",
+            "Description": "kinesis",
+            "Type": "String"
+        }
+    },
+    "Resources": {
+        "Kinesis2023": {
+            "Type": "AWS::Kinesis::Stream",
+            "Properties": {
+                "Name": {
+                    "Ref": "StreamName"
+                },
+                "RetentionPeriodHours": 24,
+                "ShardCount": 1,
+                "StreamModeDetails": {
+                    "StreamMode": "PROVISIONED"
+                },
+                "Tags": [
+                    {
+                        "Key": "Developer",
+                        "Value": "Charlotte"
+                    },
+                    {
+                        "Key": "Engineer",
+                        "Value": "Jeff"
+                    }
+                ]
+            }
+        }
+    }
+}
