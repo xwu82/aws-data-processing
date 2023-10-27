@@ -1,0 +1,272 @@
+{
+    "Parameters": {
+        "AccountID": {
+            "Default": "996271584884",
+            "Description": "AWS Account ID",
+            "Type": "String"
+        },
+        
+        "Account": {
+            "Default": "kubex-aws",
+            "Description": "AWS Account",
+            "Type": "String"
+        },
+        "Region": {
+            "Default": "us-east-2",
+            "Description": "AWS Region",
+            "Type": "String"
+        },
+        "StreamName": {
+            "Default": "kinesis-test",
+            "Description": "kinesis",
+            "Type": "String"
+        },
+        "FunctionName": {
+            "Default": "LambdaConsumer1025",
+            "Description": "Lambda Function Name",
+            "Type": "String"
+        },
+        "RawBucketName": {
+            "Default": "s3-bucket-training2023",
+            "Description": "consume data to bucket",
+            "Type": "String"
+        },
+        "S3KmsKeyArn": {
+            "Default": "arn:aws:kms:us-east-2:996271584884:key/897b9e33-b3a0-4c37-9bbb-3e793d169287",
+            "Description": "KmsKey to encrypt and decrypt objects in the raw bucket",
+            "Type": "String"
+        },
+        "RoleName": {
+            "Default": "LambdaRole1025",
+            "Description": "Lambda Function Role Name",
+            "Type": "String"
+        }
+    },
+    "Resources": {
+        "LambdaRole": {
+            "Type": "AWS::IAM::Role",
+            "Properties": {
+                "AssumeRolePolicyDocument": {
+                    "Version": "2012-10-17",
+                    "Statement": [
+                        {
+                            "Effect": "Allow",
+                            "Principal": {
+                                "Service": [
+                                    "lambda.amazonaws.com"
+                                ]
+                            },
+                            "Action": [
+                                "sts:AssumeRole"
+                            ]
+                        }
+                    ]
+                },
+                "Path": "/",
+                "Policies": [
+                    {
+                        "PolicyName": "DemoLambdaS3Policy",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Sid": "WriteAccess",
+                                    "Action": [
+                                        "s3:PutObject"
+                                    ],
+                                    "Effect": "Allow",
+                                    "Resource": [
+                                        {
+                                            "Fn::Join": [
+                                                "",
+                                                [
+                                                    "arn:aws:s3:::",
+                                                    {
+                                                        "Ref": "RawBucketName"
+                                                    }
+                                                ]
+                                            ]
+                                        },
+                                        {
+                                            "Fn::Join": [
+                                                "",
+                                                [
+                                                    "arn:aws:s3:::",
+                                                    {
+                                                        "Ref": "RawBucketName"
+                                                    },
+                                                    "/*"
+                                                ]
+                                            ]
+                                        }
+                                    ]
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "PolicyName": "DemoLambdaLogPolicy",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Sid": "LogAccess",
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "logs:*"
+                                    ],
+                                    "Resource": "arn:aws:logs:*:*:*"
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "PolicyName": "DemoLambdaKMSPolicy",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "kms:Encrypt",
+                                        "kms:Decrypt",
+                                        "kms:ReEncrypt*",
+                                        "kms:GenerateDataKey*",
+                                        "kms:DescribeKey"
+                                    ],
+                                    "Resource": {
+                                        "Ref": "S3KmsKeyArn"
+                                    }
+                                }
+                            ]
+                        }
+                    },
+                    {
+                        "PolicyName": "LambdaKinesisPolicy",
+                        "PolicyDocument": {
+                            "Version": "2012-10-17",
+                            "Statement": [
+                                {
+                                    "Effect": "Allow",
+                                    "Action": [
+                                        "kinesis:GetRecords",
+                                        "kinesis:GetShardIterator",
+                                        "kinesis:DescribeStream",
+                                        "kinesis:ListShards",
+                                        "kinesis:ListStreams"
+                                    ],
+                                    "Resource": "arn:aws:kinesis:us-east-2:996271584884:stream/kinesis-test"
+                                }
+                            ]
+                        }
+                    }
+                ],
+                "RoleName": {
+                    "Fn::Join": [
+                        "-",
+                        [
+                            {
+                                "Ref": "Account"
+                            },
+                            {
+                                "Ref": "AWS::Region"
+                            },
+                            {
+                                "Ref": "RoleName"
+                            }
+                        ]
+                    ]
+                }
+            }
+        },
+        "LambdaFunction": {
+            "Type": "AWS::Lambda::Function",
+            "Properties": {
+                "Architectures": [
+                    "arm64"
+                ],
+                "Code": {
+                    "S3Bucket": "s3-bucket-training2023",
+                    "S3Key": "10_25/consumer.zip"
+                },
+                "Description": "This is a demo lambda template",
+                "EphemeralStorage": {
+                    "Size": 1024
+                },
+                "FunctionName": {
+                    "Ref": "FunctionName"
+                },
+                "Handler": "consumer.lambda_handler",
+                "MemorySize": 128,
+                "PackageType": "Zip",
+                "Role": {
+                    "Fn::GetAtt": [
+                        "LambdaRole",
+                        "Arn"
+                    ]
+                },
+                "Runtime": "python3.11",
+                "Tags": [
+                    {
+                        "Key": "Developer",
+                        "Value": "Charlotte"
+                    },
+                    {
+                        "Key": "SupportEmail",
+                        "Value": "aaaa@gamil.com"
+                    }
+                ],
+                "Timeout": 60
+            }
+        },
+        "Kinesis2023": {
+            "Type": "AWS::Kinesis::Stream",
+            "Properties": {
+                "Name": {
+                    "Ref": "StreamName"
+                },
+                "RetentionPeriodHours": 24,
+                "ShardCount": 1,
+                "StreamModeDetails": {
+                    "StreamMode": "PROVISIONED"
+                },
+                "Tags": [
+                    {
+                        "Key": "Developer",
+                        "Value": "Charlotte"
+                    },
+                    {
+                        "Key": "Engineer",
+                        "Value": "Jeff"
+                    }
+                ]
+            }
+        },
+        "EventSourceMapping": {
+            "Type": "AWS::Lambda::EventSourceMapping",
+            "DependsOn":[
+                "LambdaFunction",
+                "Kinesis2023"
+            ],
+            "Properties": {
+                "BatchSize": 150,
+                "Enabled": true,
+                "EventSourceArn": {
+                    "Fn::GetAtt": [
+                        "Kinesis2023",
+                        "Arn"
+                    ]
+                },
+                "FunctionName": {
+                    "Fn::GetAtt": [
+                        "LambdaFunction",
+                        "Arn"
+                    ]
+                },
+                "StartingPosition": "LATEST",
+                "MaximumBatchingWindowInSeconds":5,
+                "ParallelizationFactor": 10
+            }
+        }
+    }
+}
